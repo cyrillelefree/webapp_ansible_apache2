@@ -1,0 +1,22 @@
+---
+- name: "Apache installation using docker"
+  hosts: prod
+  become: true
+  vars:
+    ansible_sudo_pass: lefree
+  pre_tasks:
+    - name: "Install Epel repo"
+      package: name=epel-release state=present
+      when: ansible_distribution == "CentOS"
+    - name: "Install pip"
+      package: name=python3-pip state=present update_cache=yes
+    - name: "Install docker python"
+      pip: name=docker-py
+
+  tasks:
+    - name: Create apache container
+      docker_container:
+        name: webapp
+        image: httpd
+        ports:
+          - "8080:80"
