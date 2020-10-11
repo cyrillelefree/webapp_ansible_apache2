@@ -2,9 +2,20 @@
 - name: "Apache installation using docker"
   hosts: prod
   become: true
+  vars_files:
+    - files/secrets/credentials.yml
+
   vars:
     ansible_sudo_pass: lefree
   pre_tasks:
+    - name: "Install somepackage"
+      package: name="{{ item }}" state=present
+      when: ansible_distribution == "CentOS"
+      loop:
+        - epel-release
+        - wget
+        - git
+
     - name: "Install Epel repo"
       package: name=epel-release state=present
       when: ansible_distribution == "CentOS"
@@ -14,9 +25,15 @@
       pip: name=docker-py
 
   tasks:
+    - name: Copy website file template
+      template:
+        src: index.html.j2
+        dest: /home/cyrille/index.html
     - name: Create apache container
       docker_container:
         name: webapp
         image: httpd
         ports:
-          - "8080:80"
+          - "8090:80"
+        volumes:
+          - /home/cyrille/index.html:/usr/local/apache2/htdocs/index.html
